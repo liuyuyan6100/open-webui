@@ -4,9 +4,9 @@
 # - Nginx 已安装并运行
 # - 已启用站点：hermes.aiclawonline.website、chat.aiclawonline.website
 # - Open WebUI 本机端口：http://127.0.0.1:3000
-# - 未发现 ai.aiclawonline.website / openwebui.aiclawonline.website / webui.aiclawonline.website DNS 解析
+# - 目标域名：openweb.aiclawonline.website
 #
-# 因此本文件只作为待启用模板，不自动放入 /etc/nginx/sites-enabled。
+# 本文件作为启用说明和模板来源，避免直接改动现有成功链路。
 
 ## 启用步骤
 
@@ -23,7 +23,7 @@
 建议域名：
 
 ```text
-ai.aiclawonline.website
+openweb.aiclawonline.website
 ```
 
 2. 复制模板
@@ -43,7 +43,7 @@ ai.example.com
 替换成实际域名，例如：
 
 ```text
-ai.aiclawonline.website
+openweb.aiclawonline.website
 ```
 
 4. 先只启用 HTTP 版本申请证书
@@ -54,15 +54,15 @@ ai.aiclawonline.website
 sudo ln -s /etc/nginx/sites-available/open-webui /etc/nginx/sites-enabled/open-webui
 sudo nginx -t
 sudo systemctl reload nginx
-sudo certbot --nginx -d ai.aiclawonline.website
+sudo certbot --nginx -d openweb.aiclawonline.website
 ```
 
 5. 验证
 
 ```bash
-curl -I http://ai.aiclawonline.website
-curl -I https://ai.aiclawonline.website
-curl -sS https://ai.aiclawonline.website/health
+curl -I http://openweb.aiclawonline.website
+curl -I https://openweb.aiclawonline.website
+curl -sS https://openweb.aiclawonline.website/health
 ```
 
 ## 关键配置说明
