@@ -25,6 +25,7 @@ deploy/compose/docker-compose.prod.yml
 - 宿主机端口：`${OPEN_WEBUI_PORT:-3000}`
 - 数据目录：`/app/backend/data`
 - 默认镜像：`ghcr.io/open-webui/open-webui:main`
+- 独立网络：`open-webui-net`
 
 生产建议将 `APP_IMAGE` 固定为明确版本 tag，不建议长期使用 `main`。
 
