@@ -9,6 +9,7 @@ usage() {
 Open WebUI production ops controller
 
 Usage:
+  openwebui-ops <command> [args...]
   deploy/scripts/openwebui-ops.sh <command> [args...]
 
 Commands:
@@ -25,13 +26,13 @@ Commands:
   usage disable <user>   Disable one user by email or user id
 
 Examples:
-  deploy/scripts/openwebui-ops.sh status
-  deploy/scripts/openwebui-ops.sh signup status
-  deploy/scripts/openwebui-ops.sh signup enable
-  deploy/scripts/openwebui-ops.sh signup disable
-  deploy/scripts/openwebui-ops.sh usage status --period today
-  deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100 --dry-run
-  deploy/scripts/openwebui-ops.sh update-image --image ghcr.io/open-webui/open-webui:v0.9.2 --dry-run
+  openwebui-ops status
+  openwebui-ops signup status
+  openwebui-ops signup enable
+  openwebui-ops signup disable
+  openwebui-ops usage status --period today
+  openwebui-ops usage enforce --daily-tokens 50000 --daily-messages 100 --dry-run
+  openwebui-ops update-image --image ghcr.io/open-webui/open-webui:v0.9.2 --dry-run
 EOF
 }
 

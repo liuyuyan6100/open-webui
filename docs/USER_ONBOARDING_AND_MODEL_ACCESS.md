@@ -47,40 +47,44 @@ API Keys：关闭
 deploy/scripts/openwebui-ops.sh
 ```
 
-常用命令：
+已安装全局命令包装器：
+
+```text
+/usr/local/bin/openwebui-ops
+```
+
+因此可以在任意目录直接执行：
 
 ```bash
-cd /home/ubuntu/openwebui-custom
-
 # 查看健康状态
-bash deploy/scripts/openwebui-ops.sh status
+openwebui-ops status
 
 # 查看注册、用户、健康状态
-bash deploy/scripts/openwebui-ops.sh signup status
+openwebui-ops signup status
 
 # 临时开启注册，新用户仍为 pending
-bash deploy/scripts/openwebui-ops.sh signup enable
+openwebui-ops signup enable
 
 # 关闭注册
-bash deploy/scripts/openwebui-ops.sh signup disable
+openwebui-ops signup disable
 
 # 执行备份
-bash deploy/scripts/openwebui-ops.sh backup
+openwebui-ops backup
 
 # 启动生产服务
-bash deploy/scripts/openwebui-ops.sh up
+openwebui-ops up
 
 # 查看用户用量
-bash deploy/scripts/openwebui-ops.sh usage status --period today
+openwebui-ops usage status --period today
 
 # 按阈值巡检，dry-run 不会真的禁用
-bash deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100 --dry-run
+openwebui-ops usage enforce --daily-tokens 50000 --daily-messages 100 --dry-run
 
 # 手动禁用指定用户
-bash deploy/scripts/openwebui-ops.sh usage disable 506490465@qq.com --dry-run
+openwebui-ops usage disable 506490465@qq.com --dry-run
 
 # 镜像更新 dry-run
-bash deploy/scripts/openwebui-ops.sh update-image --image ghcr.io/open-webui/open-webui:v0.9.2 --dry-run
+openwebui-ops update-image --image ghcr.io/open-webui/open-webui:v0.9.2 --dry-run
 ```
 
 ## 注册控制脚本
@@ -224,22 +228,22 @@ deploy/scripts/user-usage.sh
 cd /home/ubuntu/openwebui-custom
 
 # 今日用量，默认跳过 admin
-bash deploy/scripts/openwebui-ops.sh usage status --period today
+openwebui-ops usage status --period today
 
 # 本月用量，包含 admin
-bash deploy/scripts/openwebui-ops.sh usage status --period month --include-admin
+openwebui-ops usage status --period month --include-admin
 
 # 按默认阈值 dry-run 巡检
-bash deploy/scripts/openwebui-ops.sh usage enforce --dry-run
+openwebui-ops usage enforce --dry-run
 
 # 自定义阈值 dry-run 巡检
-bash deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100 --monthly-tokens 1000000 --monthly-messages 1000 --dry-run
+openwebui-ops usage enforce --daily-tokens 50000 --daily-messages 100 --monthly-tokens 1000000 --monthly-messages 1000 --dry-run
 
 # 真正执行：超额用户会被改为 pending
-bash deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100
+openwebui-ops usage enforce --daily-tokens 50000 --daily-messages 100
 
 # 手动禁用某个用户
-bash deploy/scripts/openwebui-ops.sh usage disable 506490465@qq.com
+openwebui-ops usage disable 506490465@qq.com
 ```
 
 默认阈值：
@@ -280,7 +284,7 @@ chat_message.created_at
 计划任务内容：
 
 ```cron
-0 * * * * ubuntu cd /home/ubuntu/openwebui-custom && /bin/bash deploy/scripts/openwebui-ops.sh usage enforce >> /var/log/openwebui-usage-enforce.log 2>&1
+0 * * * * ubuntu cd /home/ubuntu/openwebui-custom && /usr/local/bin/openwebui-ops usage enforce >> /var/log/openwebui-usage-enforce.log 2>&1
 ```
 
 执行日志：
@@ -379,7 +383,7 @@ git ls-files deploy/env/.env.prod 无输出
 
 ```bash
 cd /home/ubuntu/openwebui-custom
-bash deploy/scripts/openwebui-ops.sh signup status
+openwebui-ops signup status
 ```
 
 检查模型授权：
