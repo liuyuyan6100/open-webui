@@ -80,6 +80,31 @@ docker compose --env-file deploy/env/.env.prod -f deploy/compose/docker-compose.
 
 ## 运维命令
 
+优先使用统一主控脚本：
+
+```bash
+cd /home/ubuntu/openwebui-custom
+bash deploy/scripts/openwebui-ops.sh status
+bash deploy/scripts/openwebui-ops.sh signup status
+bash deploy/scripts/openwebui-ops.sh backup
+```
+
+注册控制：
+
+```bash
+# 临时开启注册，新用户默认 pending
+bash deploy/scripts/openwebui-ops.sh signup enable
+
+# 关闭注册
+bash deploy/scripts/openwebui-ops.sh signup disable
+```
+
+注册、审批、普通用户模型授权详见：
+
+```text
+docs/USER_ONBOARDING_AND_MODEL_ACCESS.md
+```
+
 重启：
 
 ```bash

@@ -85,6 +85,11 @@ Nginx/Caddy 必须支持：
 
 聊天输出卡住时，优先检查反代是否正确转发流式响应。
 
+## 关联文档
+
+- `docs/AUTOMATED_IMAGE_UPDATE.md`：自动化镜像更新、备份与回滚。
+- `docs/USER_ONBOARDING_AND_MODEL_ACCESS.md`：注册开关、用户审批、普通用户模型授权与主控脚本。
+
 ## Compose 语法验证
 
 ```bash

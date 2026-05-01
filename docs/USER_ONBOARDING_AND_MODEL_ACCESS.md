@@ -1,0 +1,275 @@
+# Open WebUI 用户注册、审批与模型授权运维
+
+更新时间：2026-05-01
+
+## 适用范围
+
+本文记录当前生产 Open WebUI 的测试用户注册、管理员审批、普通用户模型可见性、以及脚本化运维入口。
+
+生产入口：
+
+```text
+https://openweb.aiclawonline.website
+```
+
+项目目录：
+
+```text
+/home/ubuntu/openwebui-custom
+```
+
+## 当前策略
+
+```text
+注册入口：默认关闭
+临时开放注册：允许
+新用户默认角色：pending
+管理员审批后角色：user
+禁止给测试用户：admin
+API Keys：关闭
+模型后端：Hermes API Server
+普通用户可用模型：hermes-agent
+```
+
+原则：
+
+1. 不长期开放公网注册。
+2. 需要新增家人/测试用户时，短期开启注册。
+3. 注册后管理员审批为 `user`。
+4. 审批完成后立即关闭注册。
+5. 普通用户只使用管理员统一发布的模型，不自行配置 Provider/API Key。
+
+## 主控脚本
+
+主控脚本路径：
+
+```text
+deploy/scripts/openwebui-ops.sh
+```
+
+常用命令：
+
+```bash
+cd /home/ubuntu/openwebui-custom
+
+# 查看健康状态
+bash deploy/scripts/openwebui-ops.sh status
+
+# 查看注册、用户、健康状态
+bash deploy/scripts/openwebui-ops.sh signup status
+
+# 临时开启注册，新用户仍为 pending
+bash deploy/scripts/openwebui-ops.sh signup enable
+
+# 关闭注册
+bash deploy/scripts/openwebui-ops.sh signup disable
+
+# 执行备份
+bash deploy/scripts/openwebui-ops.sh backup
+
+# 启动生产服务
+bash deploy/scripts/openwebui-ops.sh up
+
+# 镜像更新 dry-run
+bash deploy/scripts/openwebui-ops.sh update-image --image ghcr.io/open-webui/open-webui:v0.9.2 --dry-run
+```
+
+## 注册控制脚本
+
+注册控制脚本路径：
+
+```text
+deploy/scripts/signup-control.sh
+```
+
+直接调用：
+
+```bash
+cd /home/ubuntu/openwebui-custom
+
+bash deploy/scripts/signup-control.sh status
+bash deploy/scripts/signup-control.sh enable
+bash deploy/scripts/signup-control.sh disable
+```
+
+脚本行为：
+
+- `status`
+  - 读取公网 `/api/config`
+  - 读取 DB 中 `ui.enable_signup` / `ui.default_user_role`
+  - 列出用户及角色
+  - 检查公网 `/health`
+
+- `enable`
+  - 备份 SQLite 数据库
+  - 设置 `ui.enable_signup=true`
+  - 设置 `ui.default_user_role=pending`
+  - 重启 `open-webui`
+  - 等待容器 healthy
+  - 验证公网配置
+
+- `disable`
+  - 备份 SQLite 数据库
+  - 设置 `ui.enable_signup=false`
+  - 保持 `ui.default_user_role=pending`
+  - 重启 `open-webui`
+  - 等待容器 healthy
+  - 验证公网配置
+
+数据库路径：
+
+```text
+容器内：/app/backend/data/webui.db
+Docker volume：compose_open-webui-data
+```
+
+备份文件格式：
+
+```text
+/app/backend/data/webui.db.pre-enable-signup-YYYYmmddHHMMSS.bak
+/app/backend/data/webui.db.pre-disable-signup-YYYYmmddHHMMSS.bak
+```
+
+## 管理员审批用户
+
+用户注册后，如果看到：
+
+```text
+账号待激活
+请联系管理员以获取访问权限
+```
+
+说明该账号角色是 `pending`。
+
+管理员处理方式：
+
+1. 用管理员账号登录 Open WebUI。
+2. 进入 Admin Panel / 管理员面板。
+3. 进入 Users / 用户。
+4. 找到新注册用户。
+5. 将角色从 `pending` 改为 `user`。
+6. 不要授予 `admin`。
+
+当前管理员：
+
+```text
+lyy6100 / liuyuyan6100@163.com
+```
+
+## 普通 user 看不到模型的原因与修复
+
+### 原因
+
+当前 Open WebUI 使用 OpenAI-compatible 方式接入 Hermes API Server：
+
+```text
+OPENAI_API_BASE_URL=http://host.docker.internal:8642/v1
+模型：hermes-agent
+```
+
+Open WebUI v0.9.2 对普通 `user` 会执行模型访问控制。
+
+如果模型只是从外部 OpenAI-compatible `/v1/models` 动态拉取，而数据库中没有对应的 model override / access grant，现象是：
+
+```text
+admin 能看到模型
+普通 user 看不到模型
+```
+
+原因是无 DB 授权记录的动态模型仅 admin 可见，普通用户会被过滤。
+
+### 当前修复状态
+
+已在 Open WebUI 数据库中为 `hermes-agent` 建立模型 override，并授予所有已审批用户只读访问：
+
+```text
+model.id = hermes-agent
+model.is_active = 1
+access_grant.resource_type = model
+access_grant.resource_id = hermes-agent
+access_grant.principal_type = user
+access_grant.principal_id = *
+access_grant.permission = read
+```
+
+含义：
+
+```text
+所有通过审批的 user 都能看到并使用 hermes-agent
+但不能管理模型配置
+```
+
+普通用户不需要配置 Provider、API Key 或模型后端。
+
+## 验证命令
+
+查看注册状态：
+
+```bash
+cd /home/ubuntu/openwebui-custom
+bash deploy/scripts/openwebui-ops.sh signup status
+```
+
+检查模型授权：
+
+```bash
+docker exec open-webui sh -lc "python - <<'PY'
+import sqlite3
+con=sqlite3.connect('/app/backend/data/webui.db')
+print('models:')
+for row in con.execute('select id,name,is_active from model'):
+    print(row)
+print('model grants:')
+for row in con.execute(\"select resource_id,principal_type,principal_id,permission from access_grant where resource_type='model'\"):
+    print(row)
+con.close()
+PY"
+```
+
+预期包含：
+
+```text
+('hermes-agent', 'hermes-agent', 1)
+('hermes-agent', 'user', '*', 'read')
+```
+
+检查公网健康：
+
+```bash
+curl -sS https://openweb.aiclawonline.website/health
+```
+
+预期：
+
+```json
+{"status":true}
+```
+
+## 风险与注意事项
+
+1. 注册不要长期开放，避免垃圾注册和后台管理噪音。
+2. 即使默认 `pending`，注册接口长期开放仍会增加公网攻击面。
+3. 普通测试用户只给 `user`，不要给 `admin`。
+4. 不要开启普通用户 API Keys，除非明确需要。
+5. 模型授权使用 `user:* read`，只开放模型使用权，不开放模型管理权。
+6. 修改数据库前必须备份；当前脚本已内置备份。
+7. Open WebUI 升级后需复查：
+   - `ui.enable_signup`
+   - `ui.default_user_role`
+   - `model` 表
+   - `access_grant` 表
+   - 普通 user 是否仍能看到 `hermes-agent`
+
+## 最近一次验证状态
+
+```text
+时间：2026-05-01
+注册：关闭，enable_signup=false
+默认新用户角色：pending
+用户：cici=user, lyy6100=admin
+模型：hermes-agent active
+授权：user:* read
+容器：open-webui healthy
+公网 health：{"status":true}
+提交：8fa058222 feat: add Open WebUI ops controller and signup control
+```
