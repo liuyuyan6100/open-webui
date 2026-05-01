@@ -32,6 +32,23 @@ docker inspect open-webui --format '{{.Config.Image}}'
 
 ## 升级镜像
 
+推荐使用自动化脚本完成备份、更新、验证和失败回滚：
+
+```bash
+cd /home/ubuntu/openwebui-custom
+bash deploy/scripts/update-image.sh --image ghcr.io/open-webui/open-webui:v0.x.x
+```
+
+先 dry-run：
+
+```bash
+bash deploy/scripts/update-image.sh --image ghcr.io/open-webui/open-webui:v0.x.x --dry-run
+```
+
+详见：`docs/AUTOMATED_IMAGE_UPDATE.md`。
+
+手动方式如下。
+
 修改：
 
 ```text
