@@ -1,5 +1,63 @@
 # Operations Runbook
 
+## 全局运维入口
+
+已安装全局命令：
+
+```bash
+openwebui-ops
+```
+
+实际路径：
+
+```text
+/usr/local/bin/openwebui-ops
+```
+
+实现方式：root 拥有的可执行 wrapper 文件，不是 symlink。
+
+wrapper 源文件：
+
+```text
+/home/ubuntu/openwebui-custom/deploy/scripts/openwebui-ops-global-wrapper.sh
+```
+
+实际控制器：
+
+```text
+/home/ubuntu/openwebui-custom/deploy/scripts/openwebui-ops.sh
+```
+
+默认项目目录：
+
+```text
+/home/ubuntu/openwebui-custom
+```
+
+核验：
+
+```bash
+command -v openwebui-ops
+ls -l /usr/local/bin/openwebui-ops
+openwebui-ops status
+```
+
+项目目录移动时可覆盖：
+
+```bash
+OPENWEBUI_CUSTOM_ROOT=/path/to/openwebui-custom openwebui-ops status
+```
+
+常用命令：
+
+```bash
+openwebui-ops status
+openwebui-ops backup
+openwebui-ops signup status
+openwebui-ops usage status --period today
+openwebui-ops usage enforce --dry-run
+```
+
 ## 进入项目目录
 
 ```bash
