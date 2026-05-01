@@ -70,6 +70,15 @@ bash deploy/scripts/openwebui-ops.sh backup
 # 启动生产服务
 bash deploy/scripts/openwebui-ops.sh up
 
+# 查看用户用量
+bash deploy/scripts/openwebui-ops.sh usage status --period today
+
+# 按阈值巡检，dry-run 不会真的禁用
+bash deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100 --dry-run
+
+# 手动禁用指定用户
+bash deploy/scripts/openwebui-ops.sh usage disable 506490465@qq.com --dry-run
+
 # 镜像更新 dry-run
 bash deploy/scripts/openwebui-ops.sh update-image --image ghcr.io/open-webui/open-webui:v0.9.2 --dry-run
 ```
@@ -200,6 +209,65 @@ access_grant.permission = read
 ```
 
 普通用户不需要配置 Provider、API Key 或模型后端。
+
+## 用户用量统计与超额禁用
+
+用量控制脚本路径：
+
+```text
+deploy/scripts/user-usage.sh
+```
+
+推荐统一通过主控脚本调用：
+
+```bash
+cd /home/ubuntu/openwebui-custom
+
+# 今日用量，默认跳过 admin
+bash deploy/scripts/openwebui-ops.sh usage status --period today
+
+# 本月用量，包含 admin
+bash deploy/scripts/openwebui-ops.sh usage status --period month --include-admin
+
+# 按默认阈值 dry-run 巡检
+bash deploy/scripts/openwebui-ops.sh usage enforce --dry-run
+
+# 自定义阈值 dry-run 巡检
+bash deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100 --monthly-tokens 1000000 --monthly-messages 1000 --dry-run
+
+# 真正执行：超额用户会被改为 pending
+bash deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100
+
+# 手动禁用某个用户
+bash deploy/scripts/openwebui-ops.sh usage disable 506490465@qq.com
+```
+
+默认阈值：
+
+```text
+daily_tokens=50000
+daily_messages=100
+monthly_tokens=1000000
+monthly_messages=1000
+```
+
+脚本统计来源：
+
+```text
+chat_message.role = assistant
+chat_message.usage.input_tokens / output_tokens / total_tokens
+chat_message.created_at
+```
+
+脚本行为：
+
+- `status`：输出用户消息数、input tokens、output tokens、total tokens。
+- `enforce`：超过阈值的非 admin 用户改为 `pending`。
+- `disable`：按 email 或 user id 将指定非 admin 用户改为 `pending`。
+- 默认跳过 admin；除非显式传 `--include-admin`。
+- `--dry-run` 只打印将执行的动作，不改数据库。
+
+注意：这是“巡检后禁用”，不是请求前硬拦截。可能出现用户超出一点后才被禁用。若需要严格硬限额，应后续在 Hermes API Server / Gateway 层实现请求前拦截。
 
 ## 验证命令
 

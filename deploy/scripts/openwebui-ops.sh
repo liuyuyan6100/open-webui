@@ -20,12 +20,17 @@ Commands:
   signup status          Show signup/users status
   signup enable          Enable public signup; new users stay pending
   signup disable         Disable public signup
+  usage status [args...] Show per-user usage
+  usage enforce [args...] Enforce per-user usage limits by setting offenders to pending
+  usage disable <user>   Disable one user by email or user id
 
 Examples:
   deploy/scripts/openwebui-ops.sh status
   deploy/scripts/openwebui-ops.sh signup status
   deploy/scripts/openwebui-ops.sh signup enable
   deploy/scripts/openwebui-ops.sh signup disable
+  deploy/scripts/openwebui-ops.sh usage status --period today
+  deploy/scripts/openwebui-ops.sh usage enforce --daily-tokens 50000 --daily-messages 100 --dry-run
   deploy/scripts/openwebui-ops.sh update-image --image ghcr.io/open-webui/open-webui:v0.9.2 --dry-run
 EOF
 }
@@ -55,6 +60,10 @@ case "$cmd" in
   signup)
     shift || true
     run_script signup-control.sh "$@"
+    ;;
+  usage)
+    shift || true
+    run_script user-usage.sh "$@"
     ;;
   -h|--help|help|'')
     usage
