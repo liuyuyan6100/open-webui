@@ -308,6 +308,71 @@ tail -n 100 /var/log/openwebui-usage-enforce.log
 sudo rm -f /etc/cron.d/openwebui-usage-enforce
 ```
 
+## 敏感信息与 Git 提交检查
+
+最近一次检查结论：未发现真实密钥被提交到 Git。
+
+检查范围：
+
+```text
+最近 5 个提交
+最近提交涉及的 deploy/scripts 与 docs 文件
+主仓库 deploy/docs 下的敏感关键词
+.gitignore 与 deploy/env/.env.prod 跟踪状态
+```
+
+确认结果：
+
+```text
+deploy/env/.env.prod 未被 git 跟踪
+deploy/env/.env.prod 被 .gitignore env/ 规则忽略
+当前工作区干净
+```
+
+允许出现在仓库中的仅为模板或占位符，例如：
+
+```text
+WEBUI_SECRET_KEY=dummy
+WEBUI_SECRET_KEY=change-me-to-a-long-random-string
+OPENAI_API_KEY=change-me
+<Hermes API_SERVER_KEY>
+```
+
+不允许提交：
+
+```text
+真实 WEBUI_SECRET_KEY
+真实 OPENAI_API_KEY / API_SERVER_KEY
+GitHub token
+Cloudflare token
+Let's Encrypt 私钥
+任意 *.pem / 私钥块
+生产备份包中的 secrets/.env.prod
+```
+
+建议每次 push 前执行：
+
+```bash
+cd /home/ubuntu/openwebui-custom
+
+git status --short
+
+git grep -n -I -E '(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]+|BEGIN .*PRIVATE KEY|OPENAI_API_KEY=|API_SERVER_KEY=|WEBUI_SECRET_KEY=|CF_TOKEN=)' -- deploy docs .github 2>/dev/null || true
+
+git check-ignore -v deploy/env/.env.prod
+
+git ls-files deploy/env/.env.prod
+```
+
+预期：
+
+```text
+git ls-files deploy/env/.env.prod 无输出
+敏感扫描只允许出现 dummy/change-me/<...> 这类占位符
+```
+
+注意：`deploy/scripts/backup.sh` 会把 `.env.prod` 备份到本机备份包中用于恢复。备份包不得上传到公开仓库或外发。
+
 ## 验证命令
 
 查看注册状态：
