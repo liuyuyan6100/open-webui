@@ -269,6 +269,45 @@ chat_message.created_at
 
 注意：这是“巡检后禁用”，不是请求前硬拦截。可能出现用户超出一点后才被禁用。若需要严格硬限额，应后续在 Hermes API Server / Gateway 层实现请求前拦截。
 
+### 自动执行
+
+当前已通过系统 cron 每小时自动执行一次用量巡检：
+
+```text
+/etc/cron.d/openwebui-usage-enforce
+```
+
+计划任务内容：
+
+```cron
+0 * * * * ubuntu cd /home/ubuntu/openwebui-custom && /bin/bash deploy/scripts/openwebui-ops.sh usage enforce >> /var/log/openwebui-usage-enforce.log 2>&1
+```
+
+执行日志：
+
+```text
+/var/log/openwebui-usage-enforce.log
+```
+
+查看 cron：
+
+```bash
+sudo sed -n '1,120p' /etc/cron.d/openwebui-usage-enforce
+systemctl is-active cron
+```
+
+查看执行日志：
+
+```bash
+tail -n 100 /var/log/openwebui-usage-enforce.log
+```
+
+关闭自动限额：
+
+```bash
+sudo rm -f /etc/cron.d/openwebui-usage-enforce
+```
+
 ## 验证命令
 
 查看注册状态：
